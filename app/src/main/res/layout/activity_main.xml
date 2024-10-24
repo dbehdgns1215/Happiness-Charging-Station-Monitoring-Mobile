@@ -187,6 +187,28 @@
                     android:textSize="16sp"
                     android:textColor="#666666" />
 
+            <Button
+                    android:id="@+id/btn_close"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="닫기"
+                    android:textSize="16sp"
+                    android:textColor="@android:color/white"
+                    android:backgroundTint="#FF5722"
+                    android:layout_marginTop="16dp"
+                    android:layout_gravity="center" />
+
+            <Button
+                    android:id="@+id/btn_add_review"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="리뷰 추가"
+                    android:textSize="16sp"
+                    android:textColor="@android:color/white"
+                    android:backgroundTint="#4CAF50"
+                    android:layout_marginTop="8dp"
+                    android:layout_gravity="center" />
+
         </LinearLayout>
     </ScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>

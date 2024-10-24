@@ -20,6 +20,8 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".View.ReviewActivity" />
+
         <meta-data
                 android:name="com.naver.maps.map.CLIENT_ID"
                 android:value="tg2jn30hid" />

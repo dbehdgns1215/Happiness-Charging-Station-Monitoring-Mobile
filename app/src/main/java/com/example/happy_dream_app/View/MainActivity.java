@@ -1,11 +1,14 @@
 package com.example.happy_dream_app.View;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.happy_dream_app.APIClient;
 import com.example.happy_dream_app.DTO.ChargerDTO;
@@ -32,6 +35,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             addressDetail, weekdayOpen, saturdayOpen, holidayOpen,
             weekdayClose, saturdayClose, holidayClose, chargerCount, chargeAirYn,
             chargePhoneYn, callNumber, updatedDate, createdAt, modifiedAt;
+
+    // 버튼 선언
+    private Button btnClose, btnAddReview;
+
+    // 선택된 충전소 ID 저장 변수
+    private int selectedChargerId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,6 +77,24 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         updatedDate = findViewById(R.id.updated_date);
         createdAt = findViewById(R.id.created_at);
         modifiedAt = findViewById(R.id.modified_at);
+
+        // 버튼 초기화
+        btnClose = findViewById(R.id.btn_close);
+        btnAddReview = findViewById(R.id.btn_add_review);
+
+        // 닫기 버튼 클릭 이벤트 처리
+        btnClose.setOnClickListener(v -> infoScroll.setVisibility(View.GONE));
+
+        // 리뷰 추가 버튼 클릭 이벤트 처리
+        btnAddReview.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, ReviewActivity.class);
+            intent.putExtra("chargerId", selectedChargerId);
+            intent.putExtra("chargerName", chargerName.getText().toString());
+            intent.putExtra("address", addressNew.getText().toString());
+            intent.putExtra("addressDetail", addressDetail.getText().toString());
+            startActivity(intent);
+        });
+
     }
 
     @Override
@@ -112,6 +139,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void showChargerInfo(ChargerDTO charger) {
+        selectedChargerId = charger.getId();  // 충전소 ID 저장
         chargerName.setText("충전소 이름: " + charger.getName());
         city1.setText("광역시/도: " + charger.getCity1());
         city2.setText("시군구: " + charger.getCity2());
