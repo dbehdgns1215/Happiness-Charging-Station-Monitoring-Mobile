@@ -59,14 +59,13 @@ public class ReviewActivity extends AppCompatActivity {
             return;
         }
 
-        // ReviewDTO 생성
-        ReviewDTO reviewDTO = new ReviewDTO(chargerId, userId, content, rating);
-
         // ReviewService 호출
         ReviewService reviewService = APIClient.getRetrofit().create(ReviewService.class);
 
-        // 경로 파라미터와 DTO 전달
-        Call<Void> call = reviewService.addReview(chargerId, userId, reviewDTO);
+        ReviewDTO review = new ReviewDTO(chargerId, userId, content, rating);
+
+        // 경로 파라미터와 리뷰 본문, 별점 전달
+        Call<Void> call = reviewService.addReview(chargerId, review);
 
         call.enqueue(new Callback<Void>() {
             @Override
