@@ -10,21 +10,30 @@
             android:allowBackup="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar"
-            android:usesCleartextTraffic="true"> <!-- HTTP 통신 허용 -->>
+            android:usesCleartextTraffic="true">
+        <activity
+                android:name=".View.SignupActivity"
+                android:exported="false"/>
+        <activity
+                android:name=".View.LoginActivity"
+                android:exported="false"/>
+        <activity
+                android:name=".View.ProfileActivity"
+                android:exported="false"/> <!-- HTTP 통신 허용 -->
         <activity
                 android:name=".View.MainActivity"
                 android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
+
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-
-        <activity android:name=".View.ReviewActivity" />
+        <activity android:name=".View.ReviewActivity"/>
 
         <meta-data
                 android:name="com.naver.maps.map.CLIENT_ID"
-                android:value="tg2jn30hid" />
+                android:value="tg2jn30hid"/>
     </application>
 
 </manifest>

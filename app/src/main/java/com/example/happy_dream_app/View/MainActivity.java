@@ -5,10 +5,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
-import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.happy_dream_app.APIClient;
 import com.example.happy_dream_app.DTO.ChargerDTO;
@@ -164,4 +162,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         infoScroll.setVisibility(View.VISIBLE);
     }
 
+    // 마이페이지 열기
+    public void openProfilePage(android.view.View view) {
+        Intent intent = new Intent(this, ProfileActivity.class);
+        startActivity(intent);
+    }
 }
