@@ -1,22 +1,67 @@
 package com.example.happy_dream_app.View;
 
-import androidx.appcompat.app.AppCompatActivity;
-import android.os.Bundle;
-import com.example.happy_dream_app.R;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.Bundle;
 import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
+import androidx.appcompat.app.AppCompatActivity;
+import com.example.happy_dream_app.R;
 
 public class ProfileActivity extends AppCompatActivity {
+    private TextView profileName;
+    private Button loginLogoutButton;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile);
 
-        // Navigate to LoginActivity
-        Button loginButton = findViewById(R.id.btn_login);
-        loginButton.setOnClickListener(view -> {
-            Intent intent = new Intent(ProfileActivity.this, LoginActivity.class);
-            startActivity(intent);
+        profileName = findViewById(R.id.profile_name);
+        loginLogoutButton = findViewById(R.id.btn_login);
+
+        // LoginActivity에서 전달된 username 받아오기
+        String username = getIntent().getStringExtra("username");
+        if (username != null) {
+            profileName.setText(username);  // 유저 이름 표시
+            loginLogoutButton.setText("로그아웃");  // 버튼 텍스트를 로그아웃으로 변경
+        } else {
+            profileName.setText("로그인을 해주세요.");
+            loginLogoutButton.setText("로그인");
+        }
+
+        // 로그인/로그아웃 버튼 클릭 이벤트
+        loginLogoutButton.setOnClickListener(view -> {
+            if (isLoggedIn()) {
+                logout();  // 로그아웃 수행
+            } else {
+                // 로그인 화면으로 이동
+                Intent intent = new Intent(ProfileActivity.this, LoginActivity.class);
+                startActivity(intent);
+                finish();
+            }
         });
+    }
+
+    // 로그인 여부 확인
+    private boolean isLoggedIn() {
+        SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
+        return prefs.getString("jwt_token", null) != null;
+    }
+
+    // 로그아웃 수행 (토큰 삭제 및 로그인 화면으로 이동)
+    private void logout() {
+        SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.remove("jwt_token");  // 토큰 삭제
+        editor.apply();
+
+        Toast.makeText(this, "로그아웃", Toast.LENGTH_SHORT).show();
+
+        // 로그인 화면으로 이동
+        Intent intent = new Intent(ProfileActivity.this, LoginActivity.class);
+        startActivity(intent);
+        finish();
     }
 }
