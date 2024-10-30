@@ -21,8 +21,11 @@ public class ProfileActivity extends AppCompatActivity {
         profileName = findViewById(R.id.profile_name);
         loginLogoutButton = findViewById(R.id.btn_login);
 
-        // LoginActivity에서 전달된 username 받아오기
-        String username = getIntent().getStringExtra("username");
+
+        String username = getUsername();
+        int userId = getUserId();
+
+        // LoginActivity에서 저장된 username 받아오기
         if (username != null) {
             profileName.setText(username);  // 유저 이름 표시
             loginLogoutButton.setText("로그아웃");  // 버튼 텍스트를 로그아웃으로 변경
@@ -63,5 +66,17 @@ public class ProfileActivity extends AppCompatActivity {
         Intent intent = new Intent(ProfileActivity.this, LoginActivity.class);
         startActivity(intent);
         finish();
+    }
+
+    // userId 불러오기 함수
+    private int getUserId() {
+        SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
+        return prefs.getInt("user_id", -1);  // 기본값 -1 반환
+    }
+
+    // username 불러오기 함수
+    private String getUsername() {
+        SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
+        return prefs.getString("username", "");  // 없을 경우 빈 문자열 반환
     }
 }

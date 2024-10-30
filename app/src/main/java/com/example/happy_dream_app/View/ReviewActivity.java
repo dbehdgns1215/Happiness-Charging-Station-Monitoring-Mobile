@@ -1,6 +1,6 @@
 package com.example.happy_dream_app.View;
 
-import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
@@ -18,7 +18,7 @@ import retrofit2.Response;
 
 public class ReviewActivity extends AppCompatActivity {
     private int chargerId;
-    private int userId = 1;  // 테스트용 유저 ID
+    private int userId;
 
     private TextView address, addressDetail;
     private EditText reviewContent;
@@ -34,6 +34,9 @@ public class ReviewActivity extends AppCompatActivity {
         chargerId = getIntent().getIntExtra("chargerId", -1);
         String addr = getIntent().getStringExtra("address");
         String addrDetail = getIntent().getStringExtra("addressDetail");
+
+        // SharedPreferences에서 userId 불러오기
+        userId = getUserIdFromPrefs();
 
         // UI 요소 초기화
         address = findViewById(R.id.review_address);
@@ -85,5 +88,11 @@ public class ReviewActivity extends AppCompatActivity {
                 Toast.makeText(ReviewActivity.this, "네트워크 오류: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    // SharedPreferences에서 userId 불러오기
+    private int getUserIdFromPrefs() {
+        SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
+        return prefs.getInt("user_id", -1);  // userId가 없으면 -1 반환
     }
 }

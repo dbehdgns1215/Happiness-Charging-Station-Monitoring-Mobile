@@ -43,7 +43,7 @@ public class LoginActivity extends AppCompatActivity {
                 String username = etUsername.getText().toString().trim();
                 String password = etPassword.getText().toString().trim();
 
-                signup(username, password);
+                login(username, password);
                 Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                 startActivity(intent);
                 finish();
@@ -66,7 +66,7 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
-    private void signup(String username, String password) {
+    private void login(String username, String password) {
         UserDTO userDTO = new UserDTO(username, password);
         loginService.login(username, userDTO).enqueue(new Callback<ResponseDTO>() {
             public void onResponse(Call<ResponseDTO> call, Response<ResponseDTO> response) {
@@ -76,8 +76,11 @@ public class LoginActivity extends AppCompatActivity {
                     // 토큰 저장
                     saveToken(token);
 
-                    // 토큰에서 username 추출 및 다음 화면으로 이동
+                    // 토큰에서 username 추출 및 userID 추출 후 다음 화면으로 이동
                     String extractedUsername = extractUsernameFromToken(token);
+                    saveUserId(extractUserIdFromToken(token));
+                    saveUsername(extractUsernameFromToken(token));
+
                     Intent intent = new Intent(LoginActivity.this, ProfileActivity.class);
                     intent.putExtra("username", extractedUsername);
                     startActivity(intent);  // ProfileActivity로 이동
@@ -110,6 +113,36 @@ public class LoginActivity extends AppCompatActivity {
         return prefs.getString("jwt_token", null);  // 토큰이 없으면 null 반환
     }
 
+
+    // userId 저장 함수
+    private void saveUserId(int userId) {
+        SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putInt("user_id", userId);
+        editor.apply();
+    }
+
+    // userId 불러오기 함수
+    private String getUserId() {
+        SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
+        return prefs.getString("user_id", "");  // 없을 경우 빈 문자열 반환
+    }
+
+    // username 저장 함수
+    private void saveUsername(String username) {
+        SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putString("username", username);
+        editor.apply();
+    }
+
+    // username 불러오기 함수
+    private String getUsername() {
+        SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
+        return prefs.getString("username", "");  // 없을 경우 빈 문자열 반환
+    }
+
+
     // JWT 토큰에서 username 추출 (JWT의 payload 해석)
     private String extractUsernameFromToken(String token) {
         String[] parts = token.split("\\.");  // JWT 토큰은 3개의 부분으로 나뉨 (header.payload.signature)
@@ -128,6 +161,19 @@ public class LoginActivity extends AppCompatActivity {
             e.printStackTrace();
             Toast.makeText(this, "토큰 해석 중 오류가 발생했습니다.", Toast.LENGTH_SHORT).show();
             return "";  // 문제가 발생하면 빈 문자열 반환
+        }
+    }
+
+    // JWT 토큰에서 userId 추출
+    private int extractUserIdFromToken(String token) {
+        try {
+            String[] parts = token.split("\\.");
+            String payload = new String(android.util.Base64.decode(parts[1], android.util.Base64.DEFAULT));
+            JSONObject json = new JSONObject(payload);
+            return json.getInt("userId");  // userId 추출
+        } catch (JSONException e) {
+            e.printStackTrace();
+            return -1;  // 오류 시 기본값 반환
         }
     }
 }
