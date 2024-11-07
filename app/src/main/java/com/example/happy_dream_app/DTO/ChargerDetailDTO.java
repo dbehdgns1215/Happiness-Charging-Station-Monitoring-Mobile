@@ -1,12 +1,14 @@
 package com.example.happy_dream_app.DTO;
 
-import com.google.gson.annotations.SerializedName;
+import java.sql.Time;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-public class ChargerDTO {
-    private Integer id;
-    private ChargerStateDTO chargerState;
+public class ChargerDetailDTO {
+    // 츙전기 기본 데이터(Charger)
+    private Integer chargerId;
+
+    //private ChargerStateEntity chargerState;
     private String name;
     private String city1;
     private String city2;
@@ -17,39 +19,45 @@ public class ChargerDTO {
     private Double latitude;
     private Double longitude;
 
-    @SerializedName("weekdayOpen")
+    // 츙전기 운영 관련 데이터(Charger)
     private String weekdayOpen;
-    @SerializedName("saturdayOpen")
     private String saturdayOpen;
-    @SerializedName("holidayOpen")
     private String holidayOpen;
-    @SerializedName("weekdayClose")
     private String weekdayClose;
-    @SerializedName("saturdayClose")
     private String saturdayClose;
-    @SerializedName("holidayClose")
     private String holidayClose;
+
 
     private Integer chargerCount;
     private Boolean chargeAirYn;
     private Boolean chargePhoneYn;
     private String callNumber;
 
+    // 충전 상태 기본 데이터 (ChargerState)
+    private Integer chargerStateId;
+    private Boolean usingYn;
+    private Boolean brokenYn;
 
+    // 관리 목적 데이터 (Charger)
     private LocalDate updatedDate;
-    private LocalDateTime createdAt;
-    private LocalDateTime modifiedAt;
+    private LocalDateTime chargerCreatedAt;
+    private LocalDateTime chargerModifiedAt;
     private Boolean deletedYn;
     private LocalDateTime deletedAt;
 
-    // Getters and Setters
+    // 관리 목적 데이터 (ChargerState)
+    private LocalDateTime usingAt;
+    private LocalDateTime brokenAt;
+    private LocalDateTime chargerStateCreatedAt;
+    private LocalDateTime chargerStateModifiedAt;
 
-    public Integer getId() {
-        return id;
+
+    public Integer getChargerId() {
+        return chargerId;
     }
 
-    public void setId(Integer id) {
-        this.id = id;
+    public void setChargerId(Integer chargerId) {
+        this.chargerId = chargerId;
     }
 
     public String getName() {
@@ -204,6 +212,30 @@ public class ChargerDTO {
         this.callNumber = callNumber;
     }
 
+    public Integer getChargerStateId() {
+        return chargerStateId;
+    }
+
+    public void setChargerStateId(Integer chargerStateId) {
+        this.chargerStateId = chargerStateId;
+    }
+
+    public Boolean getUsingYn() {
+        return usingYn;
+    }
+
+    public void setUsingYn(Boolean usingYn) {
+        this.usingYn = usingYn;
+    }
+
+    public Boolean getBrokenYn() {
+        return brokenYn;
+    }
+
+    public void setBrokenYn(Boolean brokenYn) {
+        this.brokenYn = brokenYn;
+    }
+
     public LocalDate getUpdatedDate() {
         return updatedDate;
     }
@@ -212,20 +244,20 @@ public class ChargerDTO {
         this.updatedDate = updatedDate;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
+    public LocalDateTime getChargerCreatedAt() {
+        return chargerCreatedAt;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
+    public void setChargerCreatedAt(LocalDateTime chargerCreatedAt) {
+        this.chargerCreatedAt = chargerCreatedAt;
     }
 
-    public LocalDateTime getModifiedAt() {
-        return modifiedAt;
+    public LocalDateTime getChargerModifiedAt() {
+        return chargerModifiedAt;
     }
 
-    public void setModifiedAt(LocalDateTime modifiedAt) {
-        this.modifiedAt = modifiedAt;
+    public void setChargerModifiedAt(LocalDateTime chargerModifiedAt) {
+        this.chargerModifiedAt = chargerModifiedAt;
     }
 
     public Boolean getDeletedYn() {
@@ -244,11 +276,35 @@ public class ChargerDTO {
         this.deletedAt = deletedAt;
     }
 
-    public ChargerStateDTO getChargerState() {
-        return chargerState;
+    public LocalDateTime getUsingAt() {
+        return usingAt;
     }
 
-    public void setChargerState(ChargerStateDTO chargerState) {
-        this.chargerState = chargerState;
+    public void setUsingAt(LocalDateTime usingAt) {
+        this.usingAt = usingAt;
+    }
+
+    public LocalDateTime getBrokenAt() {
+        return brokenAt;
+    }
+
+    public void setBrokenAt(LocalDateTime brokenAt) {
+        this.brokenAt = brokenAt;
+    }
+
+    public LocalDateTime getChargerStateCreatedAt() {
+        return chargerStateCreatedAt;
+    }
+
+    public void setChargerStateCreatedAt(LocalDateTime chargerStateCreatedAt) {
+        this.chargerStateCreatedAt = chargerStateCreatedAt;
+    }
+
+    public LocalDateTime getChargerStateModifiedAt() {
+        return chargerStateModifiedAt;
+    }
+
+    public void setChargerStateModifiedAt(LocalDateTime chargerStateModifiedAt) {
+        this.chargerStateModifiedAt = chargerStateModifiedAt;
     }
 }

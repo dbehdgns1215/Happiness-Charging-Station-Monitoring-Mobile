@@ -39,6 +39,9 @@ dependencies {
     // 네이버 맵 SDK
     implementation 'com.naver.maps:map-sdk:3.19.1'
 
+    // 네이버 서드파티 SDK
+    implementation 'com.google.android.gms:play-services-location:21.0.1'
+
     // 기타 의존성
     implementation 'androidx.appcompat:appcompat:1.4.1'
     implementation 'com.google.android.material:material:1.5.0'

@@ -1,6 +1,7 @@
 package com.example.happy_dream_app.DTO;
 
 import com.google.gson.annotations.SerializedName;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class ResponseDTO<T> {
@@ -9,6 +10,8 @@ public class ResponseDTO<T> {
     private String status;
     @SerializedName("response_code")
     private Integer responseCode;
+
+    private LocalDateTime time = LocalDateTime.now();
     private String message;
     private Integer count;
     private T data;
