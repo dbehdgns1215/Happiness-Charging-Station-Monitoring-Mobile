@@ -3,6 +3,7 @@ package com.example.happy_dream_app.View;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -26,7 +27,7 @@ public class ProfileActivity extends AppCompatActivity {
         int userId = getUserId();
 
         // LoginActivity에서 저장된 username 받아오기
-        if (username != null) {
+        if (isLoggedIn()) {
             profileName.setText(username);  // 유저 이름 표시
             loginLogoutButton.setText("로그아웃");  // 버튼 텍스트를 로그아웃으로 변경
         } else {
@@ -57,9 +58,8 @@ public class ProfileActivity extends AppCompatActivity {
     private void logout() {
         SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
-        editor.remove("jwt_token");  // 토큰 삭제
-        editor.apply();
-
+        editor.clear();  // 모든 데이터 삭제
+        editor.commit();  // 즉시 저장
         Toast.makeText(this, "로그아웃", Toast.LENGTH_SHORT).show();
 
         // 로그인 화면으로 이동
@@ -67,6 +67,7 @@ public class ProfileActivity extends AppCompatActivity {
         startActivity(intent);
         finish();
     }
+
 
     // userId 불러오기 함수
     private int getUserId() {

@@ -54,6 +54,11 @@ public class ReviewActivity extends AppCompatActivity {
     }
 
     private void submitReview() {
+        if (userId == -1) {
+            Toast.makeText(this, "리뷰를 추가하려면 로그인이 필요합니다.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         String content = reviewContent.getText().toString();
         byte rating = (byte) reviewRating.getRating();
 
