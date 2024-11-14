@@ -3,6 +3,7 @@ package com.example.happy_dream_app.View;
 import static com.naver.maps.map.util.MarkerIcons.RED;
 import static com.naver.maps.map.util.MarkerIcons.YELLOW;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.Manifest;
@@ -10,8 +11,11 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import com.example.happy_dream_app.APIClient;
@@ -21,6 +25,8 @@ import com.example.happy_dream_app.R;
 import com.example.happy_dream_app.Service.ChargerService;
 import com.example.happy_dream_app.Util.ChargerClusterItem;
 import com.naver.maps.geometry.LatLng;
+import com.naver.maps.map.CameraAnimation;
+import com.naver.maps.map.CameraUpdate;
 import com.naver.maps.map.LocationTrackingMode;
 import com.naver.maps.map.MapFragment;
 import com.naver.maps.map.NaverMap;
@@ -44,6 +50,7 @@ import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1000;
+    private static final int SEARCH_REQUEST_CODE = 2000;
     private FusedLocationSource locationSource;
     private ChargerService chargerService;
     private NaverMap naverMap;
@@ -59,6 +66,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     // 버튼 선언
     private Button btnClose, btnAddReview;
+    private ImageButton btnSearch, btnRefresh;
 
     // 선택된 충전소 ID 저장 변수
     private int selectedChargerId;
@@ -81,6 +89,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
 
         initializeUIElements();
+
+        // 검색 버튼 초기화 및 클릭 이벤트 설정
+        btnSearch = findViewById(R.id.btn_search);
+        btnSearch.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, SearchActivity.class);
+            startActivityForResult(intent, SEARCH_REQUEST_CODE);
+        });
+
+        // 새로고침 버튼 설정
+        btnRefresh = findViewById(R.id.btn_refresh);
+        btnRefresh.setOnClickListener(v -> fetchChargerData());
     }
 
     @Override
@@ -313,4 +332,48 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         Intent intent = new Intent(this, ProfileActivity.class);
         startActivity(intent);
     }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == SEARCH_REQUEST_CODE && resultCode == Activity.RESULT_OK && data != null) {
+            String addressNew = data.getStringExtra("addressNew");
+            String addressOld = data.getStringExtra("addressOld");
+            double latitude = data.getDoubleExtra("latitude", 0.0);
+            double longitude = data.getDoubleExtra("longitude", 0.0);
+
+            Log.d("MainActivity", "Received from SearchActivity - Latitude: " + latitude + ", Longitude: " + longitude);
+
+            if (latitude != 0.0 && longitude != 0.0) {
+                moveMapToLocation(latitude, longitude);
+                Toast.makeText(this, "검색 주소로 이동했습니다: " + addressNew, Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "위치 정보를 가져올 수 없습니다.", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+
+
+    private void moveMapToLocation(double latitude, double longitude) {
+        if (naverMap == null) {
+            Log.e("MainActivity", "NaverMap is null");
+            return;
+        }
+
+        // 위치 추적 모드를 비활성화하여 카메라가 자동으로 돌아오지 않도록 함
+        naverMap.setLocationTrackingMode(LocationTrackingMode.None);
+
+        LatLng target = new LatLng(latitude, longitude);
+        Log.d("MainActivity", "Moving camera to: Latitude=" + latitude + ", Longitude=" + longitude);
+
+        // scrollAndZoomTo를 사용하여 카메라 위치와 줌을 설정
+        CameraUpdate cameraUpdate = CameraUpdate.scrollAndZoomTo(target, 17)
+                .animate(CameraAnimation.Easing);
+
+        // 카메라 이동 실행
+        naverMap.moveCamera(cameraUpdate);
+    }
+
 }
