@@ -10,8 +10,5 @@ import retrofit2.http.Query;
 
 public interface SignupService {
     @POST("/api/v1/users")
-    Call<ResponseDTO> signup(
-            @retrofit2.http.Query("username") String username,
-            @Body UserDTO userDTO
-    );
+    Call<ResponseDTO> signup(@Body UserDTO userDTO);
 }

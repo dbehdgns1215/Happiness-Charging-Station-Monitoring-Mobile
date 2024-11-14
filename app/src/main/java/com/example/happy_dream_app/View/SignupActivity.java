@@ -45,27 +45,48 @@ public class SignupActivity extends AppCompatActivity {
                 String password = etPassword.getText().toString().trim();
                 String confirmPassword = etConfirmPassword.getText().toString().trim();
 
+                if (username.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
+                    Toast.makeText(SignupActivity.this, "모든 필드를 입력해주세요.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
                 if (!password.equals(confirmPassword)) {
                     Toast.makeText(SignupActivity.this, "비밀번호가 일치하지 않습니다.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                if (password.length() < 4) {
+                    Toast.makeText(SignupActivity.this, "비밀번호는 최소 4글자 이상이어야 합니다.", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
                 signup(username, password);
             }
         });
+
     }
 
     // 회원가입 로직
     private void signup(String username, String password) {
         UserDTO userDTO = new UserDTO(username, password);
-        signupService.signup(username, userDTO).enqueue(new Callback<ResponseDTO>() {
+        signupService.signup(userDTO).enqueue(new Callback<ResponseDTO>() {
             @Override
             public void onResponse(Call<ResponseDTO> call, Response<ResponseDTO> response) {
-                if (response.isSuccessful()) {
-                    Toast.makeText(SignupActivity.this, "회원가입 성공", Toast.LENGTH_SHORT).show();
-                    finish();  // 로그인 화면으로 복귀
+                if (response.isSuccessful() && response.body() != null) {
+                    if ("success".equals(response.body().getStatus())) {
+                        Toast.makeText(SignupActivity.this, response.body().getMessage(), Toast.LENGTH_SHORT).show();
+                        finish();  // 로그인 화면으로 복귀
+                    } else {
+                        // 서버가 success 상태를 반환했지만, 실제로는 에러인 경우
+                        Toast.makeText(SignupActivity.this, response.body().getMessage(), Toast.LENGTH_SHORT).show();
+                    }
                 } else {
-                    Toast.makeText(SignupActivity.this, "회원가입 실패", Toast.LENGTH_SHORT).show();
+                    // 서버가 비정상적인 상태를 반환한 경우
+                    if (response.body() != null) {
+                        Toast.makeText(SignupActivity.this, response.body().getMessage(), Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(SignupActivity.this, "회원가입 실패: " + response.message(), Toast.LENGTH_SHORT).show();
+                    }
                 }
             }
 
@@ -75,4 +96,5 @@ public class SignupActivity extends AppCompatActivity {
             }
         });
     }
+
 }
