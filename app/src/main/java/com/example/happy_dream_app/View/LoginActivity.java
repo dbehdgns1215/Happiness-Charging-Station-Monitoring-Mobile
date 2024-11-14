@@ -43,10 +43,12 @@ public class LoginActivity extends AppCompatActivity {
                 String username = etUsername.getText().toString().trim();
                 String password = etPassword.getText().toString().trim();
 
+                if (username.isEmpty() || password.isEmpty()) {
+                    Toast.makeText(LoginActivity.this, "아이디와 비밀번호를 입력해주세요.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
                 login(username, password);
-                Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                startActivity(intent);
-                finish();
             }
         });
 
@@ -68,27 +70,36 @@ public class LoginActivity extends AppCompatActivity {
 
     private void login(String username, String password) {
         UserDTO userDTO = new UserDTO(username, password);
-        loginService.login(username, userDTO).enqueue(new Callback<ResponseDTO>() {
+        loginService.login(userDTO).enqueue(new Callback<ResponseDTO>() {
+            @Override
             public void onResponse(Call<ResponseDTO> call, Response<ResponseDTO> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    String token = response.body().getMessage();    // 서버에서 받은 JWT 토큰
+                    if ("success".equals(response.body().getStatus())) {
+                        String token = response.body().getMessage(); // 서버에서 받은 JWT 토큰
 
-                    // 토큰 저장
-                    saveToken(token);
+                        // 토큰 저장
+                        saveToken(token);
 
-                    // 토큰에서 username 추출 및 userID 추출 후 다음 화면으로 이동
-                    String extractedUsername = extractUsernameFromToken(token);
-                    saveUserId(extractUserIdFromToken(token));
-                    saveUsername(extractUsernameFromToken(token));
+                        // 토큰에서 username 추출 및 userID 추출 후 다음 화면으로 이동
+                        String extractedUsername = extractUsernameFromToken(token);
+                        saveUserId(extractUserIdFromToken(token));
+                        saveUsername(extractUsernameFromToken(token));
 
-                    Intent intent = new Intent(LoginActivity.this, ProfileActivity.class);
-                    intent.putExtra("username", extractedUsername);
-                    startActivity(intent);  // ProfileActivity로 이동
+                        Intent intent = new Intent(LoginActivity.this, ProfileActivity.class);
+                        intent.putExtra("username", extractedUsername);
+                        startActivity(intent);  // ProfileActivity로 이동
 
-                    Toast.makeText(LoginActivity.this, "로그인 성공", Toast.LENGTH_SHORT).show();
-                    finish();  // LoginActivity 종료
+                        Toast.makeText(LoginActivity.this, "로그인 성공", Toast.LENGTH_SHORT).show();
+                        finish();
+                    } else {
+                        Toast.makeText(LoginActivity.this, response.body().getMessage(), Toast.LENGTH_SHORT).show();
+                    }
                 } else {
-                    Toast.makeText(LoginActivity.this, "로그인 실패", Toast.LENGTH_SHORT).show();
+                    if (response.body() != null) {
+                        Toast.makeText(LoginActivity.this, response.body().getMessage(), Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(LoginActivity.this, "로그인 실패: " + response.message(), Toast.LENGTH_SHORT).show();
+                    }
                 }
             }
 
@@ -98,6 +109,8 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
     }
+
+
 
     // JWT 토큰 저장 함수
     private void saveToken(String token) {

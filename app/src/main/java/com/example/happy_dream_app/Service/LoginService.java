@@ -10,8 +10,5 @@ import retrofit2.http.Query;
 
 public interface LoginService {
     @POST("/api/v1/login")
-    Call<ResponseDTO> login(
-            @retrofit2.http.Query("username") String username,
-            @Body UserDTO userDTO
-    );
+    Call<ResponseDTO> login(@Body UserDTO userDTO);
 }
