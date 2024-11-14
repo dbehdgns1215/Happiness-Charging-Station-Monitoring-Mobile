@@ -66,8 +66,8 @@ public class SearchActivity extends AppCompatActivity implements SearchResultsAd
         NaverLocalSearchService searchService = APIClient.getNaverLocalSearchRetrofit().create(NaverLocalSearchService.class);
         Call<NaverLocalSearchResponseDTO> call = searchService.searchLocal(
                 query,
-                10, // display: 한 번에 표시할 검색 결과 개수 (최대 100)
-                1,  // start: 검색 시작 위치 (최대 1000)
+                5, // display: 한 번에 표시할 검색 결과 개수 (최대 5)
+                1,  // start
                 "random", // sort: 검색 결과 정렬 방법
                 CLIENT_ID,
                 CLIENT_SECRET
