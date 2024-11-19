@@ -57,7 +57,6 @@ public class SearchResultsAdapter extends RecyclerView.Adapter<SearchResultsAdap
     @Override
     public int getItemCount() {
         int count = items != null ? items.size() : 0;
-        Log.d("SearchResultsAdapter", "getItemCount: " + count);
         return count;
     }
 

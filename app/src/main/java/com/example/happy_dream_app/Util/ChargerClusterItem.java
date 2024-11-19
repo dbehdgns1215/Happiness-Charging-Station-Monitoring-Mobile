@@ -5,22 +5,17 @@ import com.naver.maps.geometry.LatLng;
 import com.naver.maps.map.clustering.ClusteringKey;
 
 public class ChargerClusterItem implements ClusteringKey {
-    private final double latitude;
-    private final double longitude;
-    private final ChargerDetailDTO chargerDetail; // ChargerDetailDTO 정보를 저장하는 필드 추가
+    private final LatLng position;
+    private final ChargerDetailDTO chargerDetail;
 
-    public ChargerClusterItem(double latitude, double longitude, ChargerDetailDTO chargerDetail) {
-        this.latitude = latitude;
-        this.longitude = longitude;
+    public ChargerClusterItem(double lat, double lng, ChargerDetailDTO chargerDetail) {
+        position = new LatLng(lat, lng);
         this.chargerDetail = chargerDetail;
     }
 
-    public double getLatitude() {
-        return latitude;
-    }
-
-    public double getLongitude() {
-        return longitude;
+    @Override
+    public LatLng getPosition() {
+        return position;
     }
 
     public ChargerDetailDTO getChargerDetail() {
@@ -28,8 +23,18 @@ public class ChargerClusterItem implements ClusteringKey {
     }
 
     @Override
-    public LatLng getPosition() {
-        return new LatLng(latitude, longitude);
-    }
-}
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
+        ChargerClusterItem that = (ChargerClusterItem) o;
+
+        return chargerDetail.getChargerId() == that.chargerDetail.getChargerId();
+    }
+
+    @Override
+    public int hashCode() {
+        return chargerDetail.getChargerId();
+    }
+
+}
