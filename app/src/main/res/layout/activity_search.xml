@@ -14,7 +14,7 @@
                 android:id="@+id/et_search_query"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="주소를 입력하세요"
+                android:hint="  주소를 입력하세요"
                 android:inputType="text"
                 android:drawableStart="@android:drawable/ic_menu_search"
                 android:padding="10dp" />
@@ -23,6 +23,7 @@
                 android:id="@+id/btn_search"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:backgroundTint="#4CAF50"
                 android:text="검색"
                 android:layout_marginTop="8dp" />
 

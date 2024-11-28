@@ -505,7 +505,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             ratingTextView.setText(ratingText);
         } else {
             chargerRating.setRating(0); // 별점 정보가 없을 경우 0으로 설정
-            ratingTextView.setText("0.0/5");
+            ratingTextView.setText("0.0/5.0");
         }
 
         // 주소 정보 설정
