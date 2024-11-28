@@ -6,9 +6,7 @@ import retrofit2.http.Body;
 import retrofit2.http.POST;
 
 public interface ReviewService {
-    @POST("/reviews")
-    Call<Void> addReview(
-            @retrofit2.http.Query("charger_id") int chargerId,
-            @Body ReviewDTO reviewDTO
+    @POST("/api/v1/reviews")
+    Call<Void> addReview(@Body ReviewDTO reviewDTO
     );
 }

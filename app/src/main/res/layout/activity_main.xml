@@ -4,9 +4,7 @@
         xmlns:app="http://schemas.android.com/apk/res-auto"
         xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="#F5F5F5"
-        tools:context=".View.MainActivity">
+        android:layout_height="match_parent">
 
     <!-- 맵 화면 -->
     <androidx.fragment.app.FragmentContainerView
@@ -17,224 +15,578 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintBottom_toTopOf="@id/bottom_nav"
-            android:background="#E0E0E0" />
+            app:layout_constraintBottom_toTopOf="@id/bottom_nav" />
 
     <!-- 정보 스크롤 뷰 -->
     <ScrollView
             android:id="@+id/info_scroll"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_height="match_parent"
             android:visibility="gone"
             android:background="@android:color/white"
-            android:padding="16dp"
-            android:elevation="8dp"
+            android:padding="12dp"
+            android:elevation="16dp"
             app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/bottom_nav"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
 
         <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="8dp"
-                android:background="@android:color/white"
-                android:divider="?android:attr/dividerVertical"
-                android:showDividers="middle">
+                android:orientation="vertical">
 
-            <TextView
-                    android:id="@+id/charger_name"
+            <!-- 헤더 섹션 -->
+            <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="8dp">
+
+                <!-- 충전소 이름 -->
+                <TextView
+                        android:id="@+id/charger_name"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="충전소 이름"
+                        android:textSize="22sp"
+                        android:textStyle="bold"
+                        android:textColor="#333333"
+                        android:maxLines="1"
+                        android:ellipsize="end" />
+
+                <!-- 업데이트 정보 버튼 -->
+                <ImageButton
+                        android:id="@+id/btn_info"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginStart="8dp"
+                        android:src="@drawable/ic_info"
+                        android:background="?android:attr/selectableItemBackground"
+                        android:contentDescription="업데이트 정보 보기"
+                        android:scaleType="fitCenter"
+                        android:adjustViewBounds="true" />
+            </LinearLayout>
+
+            <!-- 별점 표시 -->
+            <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="충전소 이름: "
-                    android:textStyle="bold"
-                    android:textSize="18sp"
-                    android:textColor="#333333" />
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginBottom="4dp">
 
-            <TextView
-                    android:id="@+id/city1"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="광역시/도: "
-                    android:textSize="16sp"
-                    android:textColor="#666666" />
+                <RatingBar
+                        android:id="@+id/charger_rating"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:numStars="5"
+                        android:stepSize="0.5"
+                        android:isIndicator="true"
+                        android:theme="@style/RatingBarStyle" />
 
-            <TextView
-                    android:id="@+id/city2"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="시군구: "
-                    android:textSize="16sp"
-                    android:textColor="#666666" />
+                <TextView
+                        android:id="@+id/rating_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0.0/5"
+                        android:textSize="14sp"
+                        android:textColor="#666666"
+                        android:layout_marginStart="8dp" />
 
-            <TextView
-                    android:id="@+id/address_new"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="도로명 주소: "
-                    android:textSize="16sp"
-                    android:textColor="#666666" />
+            </LinearLayout>
 
-            <TextView
-                    android:id="@+id/address_old"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="구 주소: "
-                    android:textSize="16sp"
-                    android:textColor="#666666" />
 
-            <TextView
-                    android:id="@+id/address_detail"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="상세 주소: "
-                    android:textSize="16sp"
-                    android:textColor="#666666" />
+            <!-- 구분선 -->
+            <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#CCCCCC"
+                    android:layout_marginBottom="12dp" />
 
-            <TextView
-                    android:id="@+id/weekday_open"
-                    android:layout_width="wrap_content"
+            <!-- 주소 정보 섹션 -->
+            <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="평일 운영 시간: "
-                    android:textSize="16sp"
-                    android:textColor="#666666" />
+                    android:orientation="vertical"
+                    android:layout_marginBottom="12dp">
 
-            <TextView
-                    android:id="@+id/weekday_close"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="평일 마감 시간: "
-                    android:textSize="16sp"
-                    android:textColor="#666666" />
+                <!-- 도로명 주소 -->
+                <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="4dp">
 
-            <TextView
-                    android:id="@+id/saturday_open"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="토요일 운영 시간: "
-                    android:textSize="16sp"
-                    android:textColor="#666666" />
+                    <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="도로명 주소"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:textColor="#333333" />
 
-            <TextView
-                    android:id="@+id/saturday_close"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="토요일 마감 시간: "
-                    android:textSize="16sp"
-                    android:textColor="#666666" />
+                    <TextView
+                            android:id="@+id/address_new"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="여기에 도로명 주소"
+                            android:textSize="14sp"
+                            android:textColor="#666666"
+                            android:layout_marginStart="12dp" />
+                </LinearLayout>
 
-            <TextView
-                    android:id="@+id/holiday_open"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="일요일/공휴일 운영 시간: "
-                    android:textSize="16sp"
-                    android:textColor="#666666" />
+                <!-- 지번 주소 -->
+                <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="4dp">
 
-            <TextView
-                    android:id="@+id/holiday_close"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="일요일/공휴일 마감 시간: "
-                    android:textSize="16sp"
-                    android:textColor="#666666" />
+                    <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="지번 주소"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:textColor="#333333" />
 
-            <TextView
-                    android:id="@+id/charger_count"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="충전기 수: "
-                    android:textSize="16sp"
-                    android:textColor="#666666" />
+                    <TextView
+                            android:id="@+id/address_old"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="여기에 지번 주소"
+                            android:textSize="14sp"
+                            android:textColor="#666666"
+                            android:layout_marginStart="12dp" />
+                </LinearLayout>
 
-            <TextView
-                    android:id="@+id/charge_air_yn"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="에어 충전 가능: "
-                    android:textSize="16sp"
-                    android:textColor="#666666" />
+                <!-- 상세 주소 -->
+                <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
 
-            <TextView
-                    android:id="@+id/charge_phone_yn"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="휴대폰 충전 가능: "
-                    android:textSize="16sp"
-                    android:textColor="#666666" />
+                    <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="상세 주소"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:textColor="#333333" />
 
-            <TextView
-                    android:id="@+id/call_number"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="관리 담당 전화번호: "
-                    android:textSize="16sp"
-                    android:textColor="#666666" />
+                    <TextView
+                            android:id="@+id/address_detail"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="여기에 상세 주소"
+                            android:textSize="14sp"
+                            android:textColor="#666666"
+                            android:layout_marginStart="12dp" />
+                </LinearLayout>
+            </LinearLayout>
 
-            <TextView
-                    android:id="@+id/updated_date"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="충전소 정보 업데이트 날짜: "
-                    android:textSize="16sp"
-                    android:textColor="#666666" />
+            <!-- 구분선 -->
+            <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#CCCCCC"
+                    android:layout_marginBottom="12dp" />
 
-            <TextView
-                    android:id="@+id/created_at"
-                    android:layout_width="wrap_content"
+            <!-- 운영 시간 섹션 -->
+            <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="데이터 생성일: "
-                    android:textSize="16sp"
-                    android:textColor="#666666" />
+                    android:orientation="vertical"
+                    android:layout_marginBottom="12dp">
 
-            <TextView
-                    android:id="@+id/modified_at"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="데이터 수정일: "
-                    android:textSize="16sp"
-                    android:textColor="#666666" />
+                <!-- 섹션 제목 -->
+                <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="6dp">
 
-            <Button
-                    android:id="@+id/btn_close"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="닫기"
-                    android:textSize="16sp"
-                    android:textColor="@android:color/white"
-                    android:backgroundTint="#FF5722"
-                    android:layout_marginTop="16dp"
-                    android:layout_gravity="center" />
+                    <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_clock"
+                            android:layout_marginEnd="6dp" />
 
-            <Button
-                    android:id="@+id/btn_add_review"
-                    android:layout_width="wrap_content"
+                    <TextView
+                            android:id="@+id/section_title_hours"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="운영 시간"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:textColor="#333333" />
+                </LinearLayout>
+
+                <com.google.android.material.card.MaterialCardView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:cardElevation="6dp"
+                        app:cardCornerRadius="8dp"
+                        app:strokeWidth="1dp"
+                        app:strokeColor="#AAAAAA">
+
+                    <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="12dp">
+
+                        <!-- 평일 -->
+                        <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:layout_marginBottom="6dp">
+
+                            <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="평일"
+                                    android:textSize="14sp"
+                                    android:textStyle="bold"
+                                    android:textColor="#333333" />
+
+                            <TextView
+                                    android:id="@+id/weekday_hours"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="xx:xx ~ xx:xx"
+                                    android:textSize="14sp"
+                                    android:textColor="#666666"
+                                    android:layout_marginStart="12dp" />
+                        </LinearLayout>
+
+                        <!-- 토요일 -->
+                        <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:layout_marginBottom="6dp">
+
+                            <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="토요일"
+                                    android:textSize="14sp"
+                                    android:textStyle="bold"
+                                    android:textColor="#333333" />
+
+                            <TextView
+                                    android:id="@+id/saturday_hours"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="xx:xx ~ xx:xx"
+                                    android:textSize="14sp"
+                                    android:textColor="#666666"
+                                    android:layout_marginStart="12dp" />
+                        </LinearLayout>
+
+                        <!-- 일요일/공휴일 -->
+                        <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal">
+
+                            <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="일요일/공휴일"
+                                    android:textSize="14sp"
+                                    android:textStyle="bold"
+                                    android:textColor="#333333" />
+
+                            <TextView
+                                    android:id="@+id/holiday_hours"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="xx:xx ~ xx:xx"
+                                    android:textSize="14sp"
+                                    android:textColor="#666666"
+                                    android:layout_marginStart="12dp" />
+                        </LinearLayout>
+
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+
+            <!-- 시설 정보 섹션 -->
+            <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="리뷰 추가"
-                    android:textSize="16sp"
-                    android:textColor="@android:color/white"
-                    android:backgroundTint="#4CAF50"
-                    android:layout_marginTop="8dp"
-                    android:layout_gravity="center" />
+                    android:orientation="vertical"
+                    android:layout_marginBottom="12dp">
+
+                <!-- 섹션 제목 -->
+                <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="6dp">
+
+                    <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_facility"
+                            android:layout_marginEnd="6dp" />
+
+                    <TextView
+                            android:id="@+id/section_title_facility"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="시설 정보"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:textColor="#333333" />
+                </LinearLayout>
+
+                <com.google.android.material.card.MaterialCardView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:cardElevation="6dp"
+                        app:cardCornerRadius="8dp"
+                        app:strokeWidth="1dp"
+                        app:strokeColor="#AAAAAA">
+
+                    <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="12dp">
+
+                        <!-- 충전기 수 -->
+                        <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:layout_marginBottom="6dp">
+
+                            <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="충전기 수"
+                                    android:textSize="14sp"
+                                    android:textStyle="bold"
+                                    android:textColor="#333333" />
+
+                            <TextView
+                                    android:id="@+id/charger_count"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="N개"
+                                    android:textSize="14sp"
+                                    android:textColor="#666666"
+                                    android:layout_marginStart="12dp" />
+                        </LinearLayout>
+
+                        <!-- 에어 충전 가능 -->
+                        <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:layout_marginBottom="6dp">
+
+                            <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="에어 충전 가능"
+                                    android:textSize="14sp"
+                                    android:textStyle="bold"
+                                    android:textColor="#333333" />
+
+                            <TextView
+                                    android:id="@+id/charge_air_yn"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="가능/불가능"
+                                    android:textSize="14sp"
+                                    android:textColor="#666666"
+                                    android:layout_marginStart="12dp" />
+                        </LinearLayout>
+
+                        <!-- 휴대폰 충전 가능 -->
+                        <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal">
+
+                            <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="휴대폰 충전 가능"
+                                    android:textSize="14sp"
+                                    android:textStyle="bold"
+                                    android:textColor="#333333" />
+
+                            <TextView
+                                    android:id="@+id/charge_phone_yn"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="가능/불가능"
+                                    android:textSize="14sp"
+                                    android:textColor="#666666"
+                                    android:layout_marginStart="12dp" />
+                        </LinearLayout>
+
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+
+            <!-- 연락처 정보 섹션 -->
+            <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                <!-- 구분선 -->
+                <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="#CCCCCC"
+                        android:layout_marginTop="12dp"
+                        android:layout_marginBottom="12dp" />
+
+                <!-- 섹션 제목 -->
+                <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="6dp">
+
+                    <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_contact"
+                            android:layout_marginEnd="6dp" />
+
+                    <TextView
+                            android:id="@+id/section_title_contact"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="연락처 정보"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:textColor="#333333" />
+                </LinearLayout>
+
+                <com.google.android.material.card.MaterialCardView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:cardElevation="6dp"
+                        app:cardCornerRadius="8dp"
+                        app:strokeWidth="1dp"
+                        app:strokeColor="#AAAAAA">
+
+                    <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:padding="12dp">
+
+                        <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="관리 담당 전화번호"
+                                android:textSize="14sp"
+                                android:textStyle="bold"
+                                android:textColor="#333333" />
+
+                        <TextView
+                                android:id="@+id/call_number"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="전화번호"
+                                android:textSize="14sp"
+                                android:textColor="#666666"
+                                android:layout_marginStart="12dp" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+
+            <!-- 닫기 및 리뷰 추가 버튼 -->
+            <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:layout_marginTop="6dp"
+                    android:layout_marginBottom="6dp">
+
+                <!-- 리뷰 추가 및 고장 신고 버튼 -->
+                <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center">
+
+                    <Button
+                            android:id="@+id/btn_add_review"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="리뷰 추가"
+                            android:textSize="14sp"
+                            android:textColor="@android:color/white"
+                            android:backgroundTint="#4CAF50"
+                            android:layout_marginEnd="6dp" />
+
+                    <Button
+                            android:id="@+id/btn_report_issue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="고장 신고"
+                            android:textSize="14sp"
+                            android:textColor="@android:color/white"
+                            android:backgroundTint="#FF5722" />
+                </LinearLayout>
+
+                <!-- 닫기 버튼 -->
+                <Button
+                        android:id="@+id/btn_close"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="닫기"
+                        android:textSize="14sp"
+                        android:textColor="@android:color/white"
+                        android:backgroundTint="#9E9E9E"/>
+            </LinearLayout>
+
         </LinearLayout>
+
     </ScrollView>
 
     <!-- 새로고침 버튼: 충전기의 실시간 상태 받아오기 -->
-    <ImageButton
-            android:id="@+id/btn_refresh"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
+    <com.google.android.material.card.MaterialCardView
+            android:layout_width="45dp"
+            android:layout_height="45dp"
             android:layout_marginBottom="105dp"
             android:layout_marginRight="10dp"
-            android:elevation="13dp"
-            android:src="@drawable/refresh_button"
-            android:contentDescription="Refresh"
+            app:cardElevation="4dp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+            app:layout_constraintEnd_toEndOf="parent">
 
+        <ImageButton
+                android:id="@+id/btn_refresh"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@drawable/fetch"
+                android:contentDescription="새로고침"
+                android:scaleType="centerInside"
+                android:adjustViewBounds="true"
+                android:background="@android:color/transparent" />
+    </com.google.android.material.card.MaterialCardView>
 
-    <!-- 검색 버튼: 지도와 네비게이션 바 사이에 걸쳐서 위치 -->
+    <!-- 검색 버튼 -->
     <ImageButton
             android:id="@+id/btn_search"
             android:layout_width="70dp"
@@ -243,11 +595,10 @@
             android:elevation="12dp"
             android:src="@android:drawable/ic_menu_search"
             android:background="@drawable/rounded_button_background"
-            android:contentDescription="Search"
+            android:contentDescription="검색"
             app:layout_constraintBottom_toTopOf="@id/bottom_nav"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.5" />
+            app:layout_constraintEnd_toEndOf="parent" />
 
     <!-- 하단 네비게이션 바 -->
     <LinearLayout
@@ -268,7 +619,7 @@
                 android:layout_weight="1"
                 android:src="@android:drawable/ic_menu_mapmode"
                 android:background="?android:attr/selectableItemBackground"
-                android:contentDescription="Home" />
+                android:contentDescription="홈" />
 
         <ImageButton
                 android:id="@+id/btn_profile"
@@ -277,7 +628,7 @@
                 android:layout_weight="1"
                 android:src="@android:drawable/ic_menu_edit"
                 android:background="?android:attr/selectableItemBackground"
-                android:contentDescription="Profile"
+                android:contentDescription="프로필"
                 android:onClick="openProfilePage" />
     </LinearLayout>
 

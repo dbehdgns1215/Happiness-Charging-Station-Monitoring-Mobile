@@ -3,24 +3,38 @@ package com.example.happy_dream_app.View;
 import static com.naver.maps.map.util.MarkerIcons.RED;
 import static com.naver.maps.map.util.MarkerIcons.YELLOW;
 
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.Manifest;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.RatingBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.fragment.app.FragmentManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import com.example.happy_dream_app.APIClient;
 import com.example.happy_dream_app.DTO.ChargerDetailDTO;
 import com.example.happy_dream_app.DTO.ResponseDTO;
 import com.example.happy_dream_app.R;
 import com.example.happy_dream_app.Service.ChargerService;
 import com.example.happy_dream_app.Util.ChargerClusterItem;
+import com.example.happy_dream_app.Util.ChargerListAdapter;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.naver.maps.geometry.LatLng;
+import com.naver.maps.map.CameraAnimation;
+import com.naver.maps.map.CameraUpdate;
 import com.naver.maps.map.LocationTrackingMode;
 import com.naver.maps.map.MapFragment;
 import com.naver.maps.map.NaverMap;
@@ -30,38 +44,49 @@ import com.naver.maps.map.clustering.LeafMarkerInfo;
 import com.naver.maps.map.clustering.LeafMarkerUpdater;
 import com.naver.maps.map.overlay.LocationOverlay;
 import com.naver.maps.map.clustering.Clusterer;
-import com.naver.maps.map.clustering.DefaultClusterMarkerUpdater;
 import com.naver.maps.map.overlay.Marker;
 import com.naver.maps.map.overlay.OverlayImage;
 import com.naver.maps.map.util.FusedLocationSource;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1000;
+    private static final int SEARCH_REQUEST_CODE = 2000;
     private FusedLocationSource locationSource;
     private ChargerService chargerService;
     private NaverMap naverMap;
     private Clusterer<ChargerClusterItem> clusterer;
+    private Map<ChargerClusterItem, Object> clusterItems = new HashMap<>();
     private List<ChargerDetailDTO> chargerDataList = new ArrayList<>();
 
     // UI 요소 선언
     private ScrollView infoScroll;
-    private TextView chargerName, city1, city2, addressNew, addressOld,
-            addressDetail, weekdayOpen, saturdayOpen, holidayOpen,
-            weekdayClose, saturdayClose, holidayClose, chargerCount, chargeAirYn,
-            chargePhoneYn, callNumber, updatedDate, createdAt, modifiedAt;
+    private TextView chargerName, addressNew, addressOld, addressDetail,
+            chargerCount, chargeAirYn, weekdayHours, saturdayHours, holidayHours,
+            chargePhoneYn, callNumber, updatedDate, createdAt, modifiedAt, ratingTextView;
+
+    private RatingBar chargerRating; // 별점 뷰 추가
 
     // 버튼 선언
     private Button btnClose, btnAddReview;
+    private ImageButton btnSearch, btnRefresh;
 
     // 선택된 충전소 ID 저장 변수
     private int selectedChargerId;
+
+    // 마커 상태 추적 변수
+    private boolean isShowingIndividualMarkers = false;
+
+    // 개별 마커 리스트
+    private List<Marker> individualMarkers = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,32 +99,95 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         locationSource = new FusedLocationSource(this, LOCATION_PERMISSION_REQUEST_CODE);
 
         // MapFragment 초기화
-        MapFragment mapFragment = (MapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
-        if (mapFragment != null) {
-            mapFragment.getMapAsync(this);
+        FragmentManager fm = getSupportFragmentManager();
+        MapFragment mapFragment = (MapFragment) fm.findFragmentById(R.id.map);
+        if (mapFragment == null) {
+            mapFragment = MapFragment.newInstance();
+            fm.beginTransaction().add(R.id.map, mapFragment).commit();
         }
+        mapFragment.getMapAsync(this);
 
         initializeUIElements();
+
+        // 검색 버튼 초기화 및 클릭 이벤트 설정
+        btnSearch = findViewById(R.id.btn_search);
+        btnSearch.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, SearchActivity.class);
+            startActivityForResult(intent, SEARCH_REQUEST_CODE);
+        });
+
+        // 새로고침 버튼 설정
+        btnRefresh = findViewById(R.id.btn_refresh);
+        btnRefresh.setOnClickListener(v -> fetchChargerData());
+
+        // 업데이트 정보 버튼
+        ImageButton btnInfo = findViewById(R.id.btn_info);
+        btnInfo.setOnClickListener(v -> showUpdateInfo());
     }
 
     @Override
     public void onMapReady(NaverMap naverMap) {
         this.naverMap = naverMap;
-        fetchChargerData();
 
         // Clusterer 초기화
         clusterer = new Clusterer.Builder<ChargerClusterItem>()
                 .minZoom(3)
-                .maxZoom(16)
-                .screenDistance(40)
+                .maxZoom(13)
+                .screenDistance(80)
                 .animate(false)
                 .leafMarkerUpdater(new LeafMarkerUpdater() {
                     @Override
                     public void updateLeafMarker(LeafMarkerInfo info, Marker marker) {
+                        ChargerClusterItem item = (ChargerClusterItem) info.getKey();
+                        List<ChargerDetailDTO> chargersAtLocation = item.getChargersAtLocation();
+
+                        // 마커 아이콘 설정
+                        if (chargersAtLocation.size() > 1) {
+                            boolean hasAvailable = false;
+                            boolean hasUsing = false;
+                            boolean allBroken = true; // 모든 충전기가 고장났는지 여부
+
+                            for (ChargerDetailDTO charger : chargersAtLocation) {
+                                if (charger.getBrokenYn() != null && charger.getBrokenYn()) {
+                                    // 고장난 충전기이므로 아무것도 하지 않음
+                                    continue;
+                                } else {
+                                    allBroken = false; // 고장나지 않은 충전기가 있으므로 false로 설정
+
+                                    if (charger.getUsingYn() != null && charger.getUsingYn()) {
+                                        hasUsing = true; // 사용 중인 충전기가 있음
+                                    } else {
+                                        hasAvailable = true; // 사용 가능한 충전기가 있음
+                                        break; // 사용 가능한 충전기가 있으므로 더 이상 검사할 필요 없음
+                                    }
+                                }
+                            }
+
+                            if (hasAvailable) {
+                                marker.setIcon(OverlayImage.fromResource(R.drawable.marker_list_green)); // 초록색 아이콘
+                            } else if (hasUsing) {
+                                marker.setIcon(OverlayImage.fromResource(R.drawable.marker_list_yellow)); // 노란색 아이콘
+                            } else if (allBroken) {
+                                marker.setIcon(OverlayImage.fromResource(R.drawable.marker_list_red)); // 빨간색 아이콘
+                            } else {
+                                marker.setIcon(Marker.DEFAULT_ICON); // 기본적으로 초록색 아이콘
+                            }
+                        } else {
+                            // 하나의 충전소만 있는 경우 상태에 따라 아이콘 설정
+                            ChargerDetailDTO charger = chargersAtLocation.get(0);
+                            if (charger.getBrokenYn() != null && charger.getBrokenYn()) {
+                                marker.setIcon(OverlayImage.fromResource(R.drawable.marker_red));
+                            } else if (charger.getUsingYn() != null && charger.getUsingYn()) {
+                                marker.setIcon(OverlayImage.fromResource(R.drawable.marker_yellow));
+                            } else {
+                                marker.setIcon(OverlayImage.fromResource(R.drawable.marker_green));
+                            }
+                            marker.setCaptionText(null);
+                        }
+
+                        // 마커 클릭 이벤트 설정
                         marker.setOnClickListener(overlay -> {
-                            ChargerClusterItem item = (ChargerClusterItem) info.getKey();
-                            showChargerInfo(item.getChargerDetail());
+                            showChargersAtLocation(chargersAtLocation);
                             return true;
                         });
                     }
@@ -107,19 +195,19 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 .build();
         clusterer.setMap(naverMap);
 
-        // 줌 레벨 변경 감지 및 최적화
+        // 줌 레벨 변경 감지 및 마커 가시성 조정
         naverMap.addOnCameraChangeListener((reason, animated) -> {
             double zoom = naverMap.getCameraPosition().zoom;
+            boolean shouldShowIndividualMarkers = zoom >= 14;
 
-            if (zoom >= 16) {
-                // 클러스터링 해제
-                showIndividualMarkers();
-            } else {
-                // 클러스터링 활성화
-                hideIndividualMarkers();
-                if (clusterer != null && clusterer.isEmpty()) { // 한 번만 생성되게끔, 이후에는 재활용
-                    addClusterItems(chargerDataList);
+            if (isShowingIndividualMarkers != shouldShowIndividualMarkers) {
+                if (shouldShowIndividualMarkers) {
+                    showIndividualMarkers();
+                } else {
+                    hideIndividualMarkers();
+                    showClusterItems();
                 }
+                isShowingIndividualMarkers = shouldShowIndividualMarkers;
             }
         });
 
@@ -145,61 +233,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                     LOCATION_PERMISSION_REQUEST_CODE);
         }
-    }
 
-    // 개별 마커 리스트
-    private List<Marker> individualMarkers = new ArrayList<>();
-
-    // 개별 마커 보이기
-    private void showIndividualMarkers() {
-        OverlayImage usingNow = YELLOW;
-        OverlayImage brokenNow = RED;
-        if (individualMarkers.isEmpty()) {
-            double offset = 0.00000001;    // 오프셋 값
-
-            for (int i = 0; i < chargerDataList.size(); i++) {
-                ChargerDetailDTO charger = chargerDataList.get(i);
-
-                double latitude = charger.getLatitude() + (i * offset);
-                double longitude = charger.getLongitude() + (i * offset);
-
-                charger.getUsingYn();
-                charger.getBrokenYn();
-
-                Marker marker = new Marker();
-                marker.setPosition(new LatLng(latitude, longitude));
-
-                // 상태에 따라 아이콘 설정
-                if (charger.getUsingYn()) {
-                    marker.setIcon(usingNow);  // 사용 중일 때 YELLOW 아이콘
-                } else if (charger.getBrokenYn()) {
-                    marker.setIcon(brokenNow); // 고장일 때 RED 아이콘
-                }
-
-                marker.setMap(naverMap);
-                marker.setOnClickListener(overlay -> {
-                    showChargerInfo(charger);
-                    return true;
-                });
-                individualMarkers.add(marker);
-            }
-        } else {
-            for (Marker marker : individualMarkers) {
-                marker.setMap(naverMap); // 기존 마커를 재활용하여 표시
-            }
-        }
-        clusterer.setMap(null); // 클러스터링 해제
-    }
-
-    // 개별 마커 숨기기
-    private void hideIndividualMarkers() {
-        for (Marker marker : individualMarkers) {
-            marker.setMap(null); // 마커 숨기기
-        }
-        clusterer.setMap(naverMap); // 클러스터링 활성화
+        fetchChargerData();
     }
 
     private void fetchChargerData() {
+        // API 호출
         Call<ResponseDTO<List<ChargerDetailDTO>>> call = chargerService.getChargerData();
         call.enqueue(new Callback<ResponseDTO<List<ChargerDetailDTO>>>() {
             @Override
@@ -208,7 +247,20 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 Log.i("API Response", "Received response");
                 if (response.isSuccessful() && response.body() != null) {
                     chargerDataList = response.body().getData();
-                    addClusterItems(chargerDataList);
+
+                    runOnUiThread(() -> {
+                        // 마커와 클러스터 아이템 초기화
+                        initializeMarkers();
+
+                        // 현재 줌 레벨에 따라 마커 또는 클러스터 표시
+                        double zoom = naverMap.getCameraPosition().zoom;
+                        if (zoom >= 14) {
+                            showIndividualMarkers();
+                        } else {
+                            hideIndividualMarkers();
+                            showClusterItems();
+                        }
+                    });
                 } else {
                     Log.e("API Error", "Response Error: " + response.message());
                 }
@@ -222,47 +274,182 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
     }
 
-    private void addClusterItems(List<ChargerDetailDTO> chargers) {
-        Map<ChargerClusterItem, Object> clusterItems = new HashMap<>();
-        double offset = 0.00000001;  // 오프셋 값
-        for (int i = 0; i < chargers.size(); i++) {
-            ChargerDetailDTO charger = chargers.get(i);
-            double latitude = charger.getLatitude() + (i * offset);
-            double longitude = charger.getLongitude() + (i * offset);
-            ChargerClusterItem clusterItem = new ChargerClusterItem(latitude, longitude, charger);
+    private void initializeMarkers() {
+        // 기존 마커 및 클러스터 아이템 제거
+        for (Marker marker : individualMarkers) {
+            marker.setMap(null);
+        }
+        individualMarkers.clear();
+
+        // 클러스터러의 아이템을 명시적으로 제거
+        clusterer.clear();
+        clusterItems.clear();
+
+        // 위치별로 충전소 그룹핑
+        Map<String, List<ChargerDetailDTO>> locationMap = new HashMap<>();
+
+        double gridSize = 0.0001;
+
+        for (ChargerDetailDTO charger : chargerDataList) {
+            // 그리드 키 생성
+            String key = getGridKey(charger.getLatitude(), charger.getLongitude(), gridSize);
+            locationMap.computeIfAbsent(key, k -> new ArrayList<>()).add(charger);
+        }
+
+        // 그룹핑된 위치별로 마커 생성
+        for (Map.Entry<String, List<ChargerDetailDTO>> entry : locationMap.entrySet()) {
+            String[] indices = entry.getKey().split(",");
+            int latIndex = Integer.parseInt(indices[0]);
+            int lngIndex = Integer.parseInt(indices[1]);
+            double latitude = (latIndex + 0.5) * gridSize;
+            double longitude = (lngIndex + 0.5) * gridSize;
+            List<ChargerDetailDTO> chargersAtSameLocation = entry.getValue();
+
+            // 마커 생성
+            Marker marker = new Marker();
+            marker.setPosition(new LatLng(latitude, longitude));
+
+            // 마커 아이콘 설정
+            if (chargersAtSameLocation.size() > 1) {
+                boolean hasAvailable = false;
+                boolean hasUsing = false;
+                boolean allBroken = true; // 모든 충전기가 고장났는지 여부
+
+                for (ChargerDetailDTO charger : chargersAtSameLocation) {
+                    if (charger.getBrokenYn() != null && charger.getBrokenYn()) {
+                        // 고장난 충전기이므로 아무것도 하지 않음
+                        continue;
+                    } else {
+                        allBroken = false; // 고장나지 않은 충전기가 있으므로 false로 설정
+
+                        if (charger.getUsingYn() != null && charger.getUsingYn()) {
+                            hasUsing = true; // 사용 중인 충전기가 있음
+                        } else {
+                            hasAvailable = true; // 사용 가능한 충전기가 있음
+                            break; // 사용 가능한 충전기가 있으므로 더 이상 검사할 필요 없음
+                        }
+                    }
+                }
+
+                if (hasAvailable) {
+                    marker.setIcon(OverlayImage.fromResource(R.drawable.marker_list_green)); // 초록색 아이콘
+                } else if (hasUsing) {
+                    marker.setIcon(OverlayImage.fromResource(R.drawable.marker_list_yellow)); // 노란색 아이콘
+                } else if (allBroken) {
+                    marker.setIcon(OverlayImage.fromResource(R.drawable.marker_list_red)); // 빨간색 아이콘
+                } else {
+                    marker.setIcon(Marker.DEFAULT_ICON); // 기본적으로 초록색 아이콘
+                }
+            } else {
+                // 하나의 충전소만 있는 경우 상태에 따라 아이콘 설정
+                ChargerDetailDTO charger = chargersAtSameLocation.get(0);
+                if (charger.getBrokenYn() != null && charger.getBrokenYn()) {
+                    marker.setIcon(OverlayImage.fromResource(R.drawable.marker_red));
+                } else if (charger.getUsingYn() != null && charger.getUsingYn()) {
+                    marker.setIcon(OverlayImage.fromResource(R.drawable.marker_yellow));
+                } else {
+                    marker.setIcon(OverlayImage.fromResource(R.drawable.marker_green));
+                }
+                marker.setCaptionText(null);
+            }
+
+
+            // 마커 클릭 이벤트 설정
+            marker.setOnClickListener(overlay -> {
+                if (chargersAtSameLocation.size() == 1) {
+                    showChargerInfo(chargersAtSameLocation.get(0));
+                } else {
+                    showChargersAtLocation(chargersAtSameLocation);
+                }
+                return true;
+            });
+
+
+            marker.setMap(null); // 초기에는 지도에 추가하지 않음
+            individualMarkers.add(marker);
+
+            // 클러스터 아이템 생성
+            ChargerClusterItem clusterItem = new ChargerClusterItem(latitude, longitude, chargersAtSameLocation);
             clusterItems.put(clusterItem, null);
         }
-        runOnUiThread(() -> {
-            try {
-                clusterer.addAll(clusterItems);
-            } catch (Exception e) {
-                Log.e("Cluster Add Error", e.getMessage());
-            }
+
+        // 클러스터 아이템 추가
+        clusterer.addAll(clusterItems);
+    }
+
+    // 그리드 키를 생성하는 메서드
+    private String getGridKey(double latitude, double longitude, double gridSize) {
+        int latIndex = (int) Math.floor(latitude / gridSize);
+        int lngIndex = (int) Math.floor(longitude / gridSize);
+        return latIndex + "," + lngIndex;
+    }
+
+
+    private void showIndividualMarkers() {
+        // 클러스터를 숨기기
+        clusterer.setMap(null);
+
+        // 개별 마커 표시
+        for (Marker marker : individualMarkers) {
+            marker.setMap(naverMap);
+        }
+    }
+
+    private void hideIndividualMarkers() {
+        // 개별 마커 숨기기
+        for (Marker marker : individualMarkers) {
+            marker.setMap(null);
+        }
+
+        // 클러스터 표시
+        clusterer.setMap(naverMap);
+    }
+
+
+    private void showClusterItems() {
+        // 클러스터 표시
+        clusterer.setMap(naverMap);
+    }
+
+    private void showChargersAtLocation(List<ChargerDetailDTO> chargersAtLocation) {
+        // BottomSheetDialog를 사용하여 충전소 목록 표시
+        View sheetView = getLayoutInflater().inflate(R.layout.bottom_sheet_charger_list, null);
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        dialog.setContentView(sheetView);
+
+        RecyclerView recyclerView = sheetView.findViewById(R.id.recycler_view_chargers);
+        ChargerListAdapter adapter = new ChargerListAdapter(chargersAtLocation, charger -> {
+            // 아이템 클릭 시 상세 정보 표시
+            showChargerInfo(charger);
+            dialog.dismiss();
         });
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.setAdapter(adapter);
+
+        dialog.show();
     }
 
     private void initializeUIElements() {
         // UI 요소 초기화
         infoScroll = findViewById(R.id.info_scroll);
         chargerName = findViewById(R.id.charger_name);
-        city1 = findViewById(R.id.city1);
-        city2 = findViewById(R.id.city2);
+        chargerRating = findViewById(R.id.charger_rating);
+        ratingTextView = findViewById(R.id.rating_text);
         addressNew = findViewById(R.id.address_new);
         addressOld = findViewById(R.id.address_old);
         addressDetail = findViewById(R.id.address_detail);
-        weekdayOpen = findViewById(R.id.weekday_open);
-        saturdayOpen = findViewById(R.id.saturday_open);
-        holidayOpen = findViewById(R.id.holiday_open);
-        weekdayClose = findViewById(R.id.weekday_close);
-        saturdayClose = findViewById(R.id.saturday_close);
-        holidayClose = findViewById(R.id.holiday_close);
+        weekdayHours = findViewById(R.id.weekday_hours);
+        saturdayHours = findViewById(R.id.saturday_hours);
+        holidayHours = findViewById(R.id.holiday_hours);
         chargerCount = findViewById(R.id.charger_count);
         chargeAirYn = findViewById(R.id.charge_air_yn);
         chargePhoneYn = findViewById(R.id.charge_phone_yn);
         callNumber = findViewById(R.id.call_number);
-        updatedDate = findViewById(R.id.updated_date);
-        createdAt = findViewById(R.id.created_at);
-        modifiedAt = findViewById(R.id.modified_at);
+
+        // 업데이트 정보 저장용 변수 초기화
+        updatedDate = new TextView(this);
+        createdAt = new TextView(this);
+        modifiedAt = new TextView(this);
 
         // 버튼 초기화
         btnClose = findViewById(R.id.btn_close);
@@ -276,41 +463,110 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             Intent intent = new Intent(MainActivity.this, ReviewActivity.class);
             intent.putExtra("chargerId", selectedChargerId);
             intent.putExtra("chargerName", chargerName.getText().toString());
-            intent.putExtra("address", addressNew.getText().toString());
-            intent.putExtra("addressDetail", addressDetail.getText().toString());
+            intent.putExtra("address", addressNew.getText().toString() + " " + addressDetail.getText().toString());
             startActivity(intent);
         });
     }
 
     private void showChargerInfo(ChargerDetailDTO charger) {
         selectedChargerId = charger.getChargerId();  // 충전소 ID 저장
-        chargerName.setText("충전소 이름: " + charger.getName());
-        city1.setText("광역시/도: " + charger.getCity1());
-        city2.setText("시군구: " + charger.getCity2());
-        addressNew.setText("도로명 주소: " + charger.getAddressNew());
-        addressOld.setText("구 주소: " + charger.getAddressOld());
-        addressDetail.setText("상세 주소: " + charger.getAddressDetail());
-        weekdayOpen.setText("평일 운영 시간: " + charger.getWeekdayOpen());
-        saturdayOpen.setText("토요일 운영 시간: " + charger.getSaturdayOpen());
-        holidayOpen.setText("일요일/공휴일 운영 시간: " + charger.getHolidayOpen());
-        weekdayClose.setText("평일 마감 시간: " + charger.getWeekdayClose());
-        saturdayClose.setText("토요일 마감 시간: " + charger.getSaturdayClose());
-        holidayClose.setText("일요일/공휴일 마감 시간: " + charger.getHolidayClose());
-        chargerCount.setText("충전기 수: " + charger.getChargerCount());
-        chargeAirYn.setText("에어 충전 가능: " + (charger.getChargeAirYn() ? "가능" : "불가능"));
-        chargePhoneYn.setText("휴대폰 충전 가능: " + (charger.getChargePhoneYn() ? "가능" : "불가능"));
-        callNumber.setText("관리 담당 전화번호: " + charger.getCallNumber());
-        updatedDate.setText("충전소 정보 업데이트 날짜: " + charger.getUpdatedDate().toString());
-        createdAt.setText("데이터 생성일: " + charger.getChargerCreatedAt().toString());
-        modifiedAt.setText("데이터 수정일: " + charger.getChargerModifiedAt().toString());
+        chargerName.setText(charger.getName());
+
+        // 별점 설정
+        if (charger.getRating() != null) {
+            double ratingValue = charger.getRating().doubleValue();
+            chargerRating.setRating((float) ratingValue);
+
+            // 평균 별점을 텍스트로 표시
+            String ratingText = String.format("%.1f/5", ratingValue);
+            ratingTextView.setText(ratingText);
+        } else {
+            chargerRating.setRating(0); // 별점 정보가 없을 경우 0으로 설정
+            ratingTextView.setText("0.0/5");
+        }
+
+        // 주소 정보 설정
+        addressNew.setText(charger.getAddressNew());
+        addressOld.setText(charger.getAddressOld());
+        addressDetail.setText(charger.getAddressDetail());
+
+        // 운영 시간 표시 형식 수정
+        weekdayHours.setText("" + charger.getWeekdayOpen() + " ~ " + charger.getWeekdayClose());
+        saturdayHours.setText("" + charger.getSaturdayOpen() + " ~ " + charger.getSaturdayClose());
+        holidayHours.setText("" + charger.getHolidayOpen() + " ~ " + charger.getHolidayClose());
+
+        // 기타 정보 설정
+        chargerCount.setText("" + charger.getChargerCount());
+        chargeAirYn.setText("" + (charger.getChargeAirYn() ? "가능" : "불가능"));
+        chargePhoneYn.setText("" + (charger.getChargePhoneYn() ? "가능" : "불가능"));
+        callNumber.setText("" + charger.getCallNumber());
+
+        // 업데이트 정보 저장
+        updatedDate.setText(charger.getUpdatedDate().toString());
+        createdAt.setText(charger.getChargerCreatedAt().toString());
+        modifiedAt.setText(charger.getChargerModifiedAt().toString());
 
         // 정보 창을 화면에 표시
         infoScroll.setVisibility(View.VISIBLE);
+    }
+
+    private void showUpdateInfo() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("업데이트 정보");
+
+        String message = "충전소 정보 업데이트 날짜: " + updatedDate.getText().toString() + "\n"
+                + "데이터 생성일: " + createdAt.getText().toString() + "\n"
+                + "데이터 수정일: " + modifiedAt.getText().toString();
+
+        builder.setMessage(message);
+        builder.setPositiveButton("닫기", null);
+        builder.show();
     }
 
     // 마이페이지 열기
     public void openProfilePage(android.view.View view) {
         Intent intent = new Intent(this, ProfileActivity.class);
         startActivity(intent);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == SEARCH_REQUEST_CODE && resultCode == Activity.RESULT_OK && data != null) {
+            String addressNew = data.getStringExtra("addressNew");
+            String addressOld = data.getStringExtra("addressOld");
+            double latitude = data.getDoubleExtra("latitude", 0.0);
+            double longitude = data.getDoubleExtra("longitude", 0.0);
+
+            Log.d("MainActivity", "Received from SearchActivity - Latitude: " + latitude + ", Longitude: " + longitude);
+
+            if (latitude != 0.0 && longitude != 0.0) {
+                moveMapToLocation(latitude, longitude);
+                Toast.makeText(this, "검색 주소로 이동했습니다: " + addressNew, Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "위치 정보를 가져올 수 없습니다.", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    private void moveMapToLocation(double latitude, double longitude) {
+        if (naverMap == null) {
+            Log.e("MainActivity", "NaverMap is null");
+            return;
+        }
+
+        // 위치 추적 모드를 비활성화하여 카메라가 자동으로 돌아오지 않도록 함
+        naverMap.setLocationTrackingMode(LocationTrackingMode.None);
+
+        LatLng target = new LatLng(latitude, longitude);
+        Log.d("MainActivity", "Moving camera to: Latitude=" + latitude + ", Longitude=" + longitude);
+
+        // scrollAndZoomTo를 사용하여 카메라 위치와 줌을 설정
+        CameraUpdate cameraUpdate = CameraUpdate.scrollAndZoomTo(target, 17)
+                .animate(CameraAnimation.Easing);
+
+        // 카메라 이동 실행
+        naverMap.moveCamera(cameraUpdate);
     }
 }
