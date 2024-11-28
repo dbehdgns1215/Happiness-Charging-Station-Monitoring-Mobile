@@ -51,6 +51,9 @@ public class ChargerDetailDTO {
     private LocalDateTime chargerStateCreatedAt;
     private LocalDateTime chargerStateModifiedAt;
 
+    // 충전기 리뷰 관련 데이터 (Review)
+    private Double rating;
+
 
     public Integer getChargerId() {
         return chargerId;
@@ -306,5 +309,13 @@ public class ChargerDetailDTO {
 
     public void setChargerStateModifiedAt(LocalDateTime chargerStateModifiedAt) {
         this.chargerStateModifiedAt = chargerStateModifiedAt;
+    }
+
+    public Double getRating() {
+        return rating;
+    }
+
+    public void setRating(Double rating) {
+        this.rating = rating;
     }
 }
