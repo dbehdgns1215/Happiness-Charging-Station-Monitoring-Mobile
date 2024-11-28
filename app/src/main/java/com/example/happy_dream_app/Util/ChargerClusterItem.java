@@ -3,14 +3,15 @@ package com.example.happy_dream_app.Util;
 import com.example.happy_dream_app.DTO.ChargerDetailDTO;
 import com.naver.maps.geometry.LatLng;
 import com.naver.maps.map.clustering.ClusteringKey;
+import java.util.List;
 
 public class ChargerClusterItem implements ClusteringKey {
     private final LatLng position;
-    private final ChargerDetailDTO chargerDetail;
+    private final List<ChargerDetailDTO> chargersAtLocation;
 
-    public ChargerClusterItem(double lat, double lng, ChargerDetailDTO chargerDetail) {
+    public ChargerClusterItem(double lat, double lng, List<ChargerDetailDTO> chargersAtLocation) {
         position = new LatLng(lat, lng);
-        this.chargerDetail = chargerDetail;
+        this.chargersAtLocation = chargersAtLocation;
     }
 
     @Override
@@ -18,23 +19,7 @@ public class ChargerClusterItem implements ClusteringKey {
         return position;
     }
 
-    public ChargerDetailDTO getChargerDetail() {
-        return chargerDetail;
+    public List<ChargerDetailDTO> getChargersAtLocation() {
+        return chargersAtLocation;
     }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        ChargerClusterItem that = (ChargerClusterItem) o;
-
-        return chargerDetail.getChargerId() == that.chargerDetail.getChargerId();
-    }
-
-    @Override
-    public int hashCode() {
-        return chargerDetail.getChargerId();
-    }
-
 }
