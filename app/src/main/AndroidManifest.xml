@@ -45,6 +45,9 @@
         <!-- ReviewActivity 선언 -->
         <activity android:name=".View.ReviewActivity"/>
 
+        <!-- ReportActivity 선언 -->
+        <activity android:name=".View.ReportActivity"/>
+
         <!-- 네이버 맵 클라이언트 ID 메타데이터 -->
         <meta-data
                 android:name="com.naver.maps.map.CLIENT_ID"

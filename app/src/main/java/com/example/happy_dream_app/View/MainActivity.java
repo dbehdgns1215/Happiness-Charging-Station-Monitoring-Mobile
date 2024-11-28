@@ -76,7 +76,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private RatingBar chargerRating; // 별점 뷰 추가
 
     // 버튼 선언
-    private Button btnClose, btnAddReview;
+    private Button btnClose, btnAddReview, btnReport;
     private ImageButton btnSearch, btnRefresh;
 
     // 선택된 충전소 ID 저장 변수
@@ -236,6 +236,19 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         fetchChargerData();
     }
+
+    @Override
+    public void onBackPressed() {
+        new AlertDialog.Builder(this)
+                .setMessage("정말 종료하시겠습니까?")
+                .setCancelable(false)
+                .setPositiveButton("예", (dialog, id) -> {
+                    MainActivity.super.onBackPressed(); // 앱 종료
+                })
+                .setNegativeButton("아니오", null)
+                .show();
+    }
+
 
     private void fetchChargerData() {
         // API 호출
@@ -454,6 +467,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         // 버튼 초기화
         btnClose = findViewById(R.id.btn_close);
         btnAddReview = findViewById(R.id.btn_add_review);
+        btnReport = findViewById(R.id.btn_report_issue);
 
         // 닫기 버튼 클릭 이벤트 처리
         btnClose.setOnClickListener(v -> infoScroll.setVisibility(View.GONE));
@@ -461,6 +475,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         // 리뷰 추가 버튼 클릭 이벤트 처리
         btnAddReview.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, ReviewActivity.class);
+            intent.putExtra("chargerId", selectedChargerId);
+            intent.putExtra("chargerName", chargerName.getText().toString());
+            intent.putExtra("address", addressNew.getText().toString() + " " + addressDetail.getText().toString());
+            startActivity(intent);
+        });
+
+        // 고장 신고 버튼 클릭 이벤트 처리
+        btnReport.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, ReportActivity.class);
             intent.putExtra("chargerId", selectedChargerId);
             intent.putExtra("chargerName", chargerName.getText().toString());
             intent.putExtra("address", addressNew.getText().toString() + " " + addressDetail.getText().toString());
