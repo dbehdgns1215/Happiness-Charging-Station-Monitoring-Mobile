@@ -73,7 +73,7 @@ public class ReviewActivity extends AppCompatActivity {
         ReviewDTO review = new ReviewDTO(chargerId, userId, content, rating);
 
         // 경로 파라미터와 리뷰 본문, 별점 전달
-        Call<Void> call = reviewService.addReview(chargerId, review);
+        Call<Void> call = reviewService.addReview(review);
 
         call.enqueue(new Callback<Void>() {
             @Override
