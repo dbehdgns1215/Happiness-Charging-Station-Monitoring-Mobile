@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">Happy_Dream_App</string>
+
+    <string-array name="review_sort_options">
+        <item>최신순</item>
+        <item>별점 높은 순</item>
+        <item>별점 낮은 순</item>
+    </string-array>
 </resources>

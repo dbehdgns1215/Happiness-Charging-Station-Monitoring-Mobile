@@ -8,29 +8,39 @@ import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.Manifest;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.RatingBar;
 import android.widget.ScrollView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.happy_dream_app.APIClient;
 import com.example.happy_dream_app.DTO.ChargerDetailDTO;
 import com.example.happy_dream_app.DTO.ResponseDTO;
+import com.example.happy_dream_app.DTO.ReviewDTO;
+import com.example.happy_dream_app.DTO.ReviewListDTO;
 import com.example.happy_dream_app.R;
 import com.example.happy_dream_app.Service.ChargerService;
+import com.example.happy_dream_app.Service.ReviewService;
 import com.example.happy_dream_app.Util.ChargerClusterItem;
 import com.example.happy_dream_app.Util.ChargerListAdapter;
+import com.example.happy_dream_app.Util.ReviewAdapter;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.naver.maps.geometry.LatLng;
 import com.naver.maps.map.CameraAnimation;
@@ -47,7 +57,10 @@ import com.naver.maps.map.clustering.Clusterer;
 import com.naver.maps.map.overlay.Marker;
 import com.naver.maps.map.overlay.OverlayImage;
 import com.naver.maps.map.util.FusedLocationSource;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -74,10 +87,25 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             chargePhoneYn, callNumber, updatedDate, createdAt, modifiedAt, ratingTextView;
 
     private RatingBar chargerRating; // 별점 뷰 추가
+    private ReviewService reviewService;
+    private RecyclerView reviewsRecyclerView;
+    private TextView emptyView;
+
+    private ReviewAdapter reviewAdapter;
+    private List<ReviewListDTO> reviewList = new ArrayList<>();
 
     // 버튼 선언
     private Button btnClose, btnAddReview, btnReport;
     private ImageButton btnSearch, btnRefresh;
+
+    // 정렬 옵션
+    private Spinner spinnerSort;
+
+    // 탭 관련 변수 선언
+    private Button btnTabHome;
+    private Button btnTabReviews;
+    private LinearLayout homeContent;
+    private LinearLayout reviewsContent;
 
     // 선택된 충전소 ID 저장 변수
     private int selectedChargerId;
@@ -425,6 +453,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void showChargersAtLocation(List<ChargerDetailDTO> chargersAtLocation) {
+        showHomeContent();
+
         // BottomSheetDialog를 사용하여 충전소 목록 표시
         View sheetView = getLayoutInflater().inflate(R.layout.bottom_sheet_charger_list, null);
         BottomSheetDialog dialog = new BottomSheetDialog(this);
@@ -469,10 +499,58 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         btnAddReview = findViewById(R.id.btn_add_review);
         btnReport = findViewById(R.id.btn_report_issue);
 
-        // 닫기 버튼 클릭 이벤트 처리
+        // 탭 버튼 초기화
+        btnTabHome = findViewById(R.id.btn_tab_home);
+        btnTabReviews = findViewById(R.id.btn_tab_reviews);
+
+        // 컨텐츠 레이아웃 초기화
+        homeContent = findViewById(R.id.home_content);
+        reviewsContent = findViewById(R.id.reviews_content);
+
+        // 리뷰 RecyclerView 초기화
+        reviewsRecyclerView = findViewById(R.id.reviews_recycler_view);
+        emptyView = findViewById(R.id.empty_view);
+        reviewAdapter = new ReviewAdapter(reviewList);
+        reviewsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        reviewsRecyclerView.setAdapter(reviewAdapter);
+
+        // Spinner 초기화
+        spinnerSort = findViewById(R.id.spinner_sort);
+
+        // 커스텀 어댑터 생성
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
+                R.array.review_sort_options, R.layout.spinner_item);
+        adapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
+        spinnerSort.setAdapter(adapter);
+
+        // Spinner 선택 이벤트 처리
+        spinnerSort.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                sortReviews(position);
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+
+        // 탭 버튼 클릭 이벤트 처리
+        btnTabHome.setOnClickListener(v -> showHomeContent());
+        btnTabReviews.setOnClickListener(v -> showReviewsContent());
+
+        // 기본으로 홈 컨텐츠를 표시
+        showHomeContent();
+
+        // 닫기 버튼 클릭 이벤트 처리 (홈 탭)
         btnClose.setOnClickListener(v -> infoScroll.setVisibility(View.GONE));
 
+        // 닫기 버튼 클릭 이벤트 처리 (리뷰 탭)
+        Button btnCloseReviews = findViewById(R.id.btn_close_reviews);
+        btnCloseReviews.setOnClickListener(v -> infoScroll.setVisibility(View.GONE));
+
         // 리뷰 추가 버튼 클릭 이벤트 처리
+        btnAddReview = findViewById(R.id.btn_add_review);
         btnAddReview.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, ReviewActivity.class);
             intent.putExtra("chargerId", selectedChargerId);
@@ -489,6 +567,28 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             intent.putExtra("address", addressNew.getText().toString() + " " + addressDetail.getText().toString());
             startActivity(intent);
         });
+    }
+
+    private void showHomeContent() {
+        // 컨텐츠 전환
+        homeContent.setVisibility(View.VISIBLE);
+        reviewsContent.setVisibility(View.GONE);
+
+        // 탭 버튼 스타일 업데이트
+        btnTabHome.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#DDDDDD"))); // 연한 회색
+        btnTabReviews.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#FFFFFF"))); // 흰색
+    }
+
+    private void showReviewsContent() {
+        fetchReviewsForCharger(selectedChargerId);
+
+        // 컨텐츠 전환
+        homeContent.setVisibility(View.GONE);
+        reviewsContent.setVisibility(View.VISIBLE);
+
+        // 탭 버튼 스타일 업데이트
+        btnTabHome.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#FFFFFF"))); // 흰색
+        btnTabReviews.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#DDDDDD"))); // 연한 회색
     }
 
     private void showChargerInfo(ChargerDetailDTO charger) {
@@ -531,6 +631,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // 정보 창을 화면에 표시
         infoScroll.setVisibility(View.VISIBLE);
+
+        // 리뷰 데이터 가져오기 (리뷰 탭을 위한)
+        fetchReviewsForCharger(selectedChargerId);
     }
 
     private void showUpdateInfo() {
@@ -545,6 +648,87 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         builder.setPositiveButton("닫기", null);
         builder.show();
     }
+
+    private void fetchReviewsForCharger(int chargerId) {
+        if (reviewService == null) {
+            reviewService = APIClient.getRetrofit().create(ReviewService.class);
+        }
+
+        Call<ResponseDTO<List<ReviewListDTO>>> call = reviewService.getReviewsByChargerId(chargerId);
+        call.enqueue(new Callback<ResponseDTO<List<ReviewListDTO>>>() {
+            @Override
+            public void onResponse(Call<ResponseDTO<List<ReviewListDTO>>> call, Response<ResponseDTO<List<ReviewListDTO>>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    List<ReviewListDTO> reviews = response.body().getData();
+                    runOnUiThread(() -> {
+                        reviewList.clear();
+                        reviewList.addAll(reviews);
+                        int selectedSortOption = spinnerSort.getSelectedItemPosition();
+                        sortReviews(selectedSortOption);
+
+                        // 데이터 유무에 따른 가시성 조절
+                        if (reviewList.isEmpty()) {
+                            reviewsRecyclerView.setVisibility(View.GONE);
+                            emptyView.setVisibility(View.VISIBLE);
+                        } else {
+                            reviewsRecyclerView.setVisibility(View.VISIBLE);
+                            emptyView.setVisibility(View.GONE);
+                        }
+                    });
+                } else {
+                    Log.e("API Error", "Response Error: " + response.message());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ResponseDTO<List<ReviewListDTO>>> call, Throwable t) {
+                Log.e("API Error", "Network Error: " + t.getMessage());
+                t.printStackTrace();
+            }
+        });
+    }
+
+
+    private void sortReviews(int sortOption) {
+        // sortOption: 0 - 최신 순, 1 - 별점 높은 순, 2 - 별점 낮은 순
+
+        switch (sortOption) {
+            case 0: // 최신 순
+                Collections.sort(reviewList, new Comparator<ReviewListDTO>() {
+                    @Override
+                    public int compare(ReviewListDTO o1, ReviewListDTO o2) {
+                        // createdAt을 비교하여 최신 순으로 정렬
+                        LocalDateTime date1 = o1.getCreatedAtAsDateTime();
+                        LocalDateTime date2 = o2.getCreatedAtAsDateTime();
+                        if (date1 == null && date2 == null) return 0;
+                        if (date1 == null) return 1;
+                        if (date2 == null) return -1;
+                        return date2.compareTo(date1); // 최신 순
+                    }
+                });
+                break;
+            case 1: // 별점 높은 순
+                Collections.sort(reviewList, new Comparator<ReviewListDTO>() {
+                    @Override
+                    public int compare(ReviewListDTO o1, ReviewListDTO o2) {
+                        return Float.compare(o2.getRating(), o1.getRating());
+                    }
+                });
+                break;
+            case 2: // 별점 낮은 순
+                Collections.sort(reviewList, new Comparator<ReviewListDTO>() {
+                    @Override
+                    public int compare(ReviewListDTO o1, ReviewListDTO o2) {
+                        return Float.compare(o1.getRating(), o2.getRating());
+                    }
+                });
+                break;
+        }
+
+        // RecyclerView 업데이트
+        reviewAdapter.notifyDataSetChanged();
+    }
+
 
     // 마이페이지 열기
     public void openProfilePage(android.view.View view) {

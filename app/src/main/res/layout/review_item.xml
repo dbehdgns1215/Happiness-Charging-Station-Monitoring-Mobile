@@ -1,0 +1,45 @@
+<!-- res/layout/review_item.xml -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:orientation="vertical"
+              android:padding="6dp">
+
+    <!-- 사용자명 및 별점 -->
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+        <RatingBar
+                android:id="@+id/rating_bar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:numStars="5"
+                android:stepSize="0.5"
+                android:isIndicator="true"
+                style="@style/RatingBarStyleSmall"/>
+    </LinearLayout>
+
+    <!-- 리뷰 내용 -->
+    <TextView
+            android:id="@+id/tv_review_content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="리뷰 내용"
+            android:textSize="14sp"
+            android:textColor="#666666"
+            android:layout_marginTop="4dp" />
+
+    <!-- 작성 날짜 -->
+    <TextView
+            android:id="@+id/tv_review_date"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="작성 날짜"
+            android:textSize="12sp"
+            android:textColor="#999999"
+            android:layout_marginTop="4dp" />
+
+</LinearLayout>

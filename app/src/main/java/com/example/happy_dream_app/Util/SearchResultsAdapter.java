@@ -1,4 +1,4 @@
-package com.example.happy_dream_app.View;
+package com.example.happy_dream_app.Util;
 
 import android.text.Html;
 import android.util.Log;

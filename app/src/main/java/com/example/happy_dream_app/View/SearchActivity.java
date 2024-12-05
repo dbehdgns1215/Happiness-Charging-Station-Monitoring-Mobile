@@ -17,10 +17,9 @@ import com.example.happy_dream_app.APIClient;
 import com.example.happy_dream_app.DTO.NaverLocalSearchResponseDTO;
 import com.example.happy_dream_app.R;
 import com.example.happy_dream_app.Service.NaverLocalSearchService;
-import com.example.happy_dream_app.Util.CoordinateConverter;
 
+import com.example.happy_dream_app.Util.SearchResultsAdapter;
 import java.util.ArrayList;
-import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.Callback;
