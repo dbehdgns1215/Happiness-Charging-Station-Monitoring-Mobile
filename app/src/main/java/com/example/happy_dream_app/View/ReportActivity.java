@@ -7,7 +7,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.happy_dream_app.APIClient;
-import com.example.happy_dream_app.DTO.ReportRequest;
+import com.example.happy_dream_app.DTO.ReportDTO;
 import com.example.happy_dream_app.DTO.ResponseDTO;
 import com.example.happy_dream_app.R;
 import com.example.happy_dream_app.Service.ReportService;
@@ -52,7 +52,7 @@ public class ReportActivity extends AppCompatActivity {
         // ReportService 호출
         ReportService reportService = APIClient.getRetrofit().create(ReportService.class);
 
-        ReportRequest reportRequest = new ReportRequest(selectedChargerId, content);
+        ReportDTO reportRequest = new ReportDTO(selectedChargerId, content);
 
         reportService.submitReport(reportRequest).enqueue(new Callback<ResponseDTO>() {
             @Override
