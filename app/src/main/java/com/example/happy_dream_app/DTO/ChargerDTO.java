@@ -6,7 +6,6 @@ import java.time.LocalDateTime;
 
 public class ChargerDTO {
     private Integer id;
-    private ChargerStateDTO chargerState;
     private String name;
     private String city1;
     private String city2;
@@ -242,13 +241,5 @@ public class ChargerDTO {
 
     public void setDeletedAt(LocalDateTime deletedAt) {
         this.deletedAt = deletedAt;
-    }
-
-    public ChargerStateDTO getChargerState() {
-        return chargerState;
-    }
-
-    public void setChargerState(ChargerStateDTO chargerState) {
-        this.chargerState = chargerState;
     }
 }
